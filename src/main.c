@@ -4,11 +4,44 @@
 #include "colors.h"
 #include "window.h"
 
+
 // #define USE_SHADER
+#define CELL_SIZE 10
+#define GRID_WIDTH 100
+#define GRID_HEIGHT 50 
+#define GRID_LENGTH GRID_WIDTH * GRID_HEIGHT
+
+typedef struct {
+	bool isAlive;
+} Cell;
+
+typedef void(InitCb)(Cell* cell, size_t idx);
+
+void renderCells(Cell* cells, Vector2 origin) {
+	for (size_t i = 0; i < GRID_LENGTH; ++i) {
+		DrawRectangle(
+			(i % GRID_WIDTH) * CELL_SIZE + (int)origin.x, 
+			(i / GRID_WIDTH) * CELL_SIZE + (int)origin.y, 
+			CELL_SIZE, 
+			CELL_SIZE, 
+			cells[i].isAlive ? RED : BLACK
+		);
+	}
+};
+
+void initCells(Cell* cells, InitCb cb) {
+	for (size_t i = 0; i < GRID_LENGTH; ++i) {
+		cb(cells + i , i);
+	}
+}
+
+void oddInit(Cell* cell, size_t idx) {
+	cell->isAlive = idx % 2 == 0;
+}
 
 int main(void) {
 	// init 
-	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "RLGL Template");	
+	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Probabilistic Cellular Automata");	
 	SetTargetFPS(TARGET_FPS);
 	Vector2* resolution = getResolution();
 
@@ -35,6 +68,9 @@ int main(void) {
 	RenderTexture2D main_target = LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	#endif // USE_SHADER
+	
+	Cell cells[GRID_LENGTH];
+	initCells(cells, oddInit);
 
 	while (!WindowShouldClose()) {
 		resolution->x = (float)GetScreenWidth();
@@ -56,7 +92,7 @@ int main(void) {
 		
 		BeginDrawing();
 
-			ClearBackground(BLACK);
+			ClearBackground(colors[0]);
 
 			#ifdef USE_SHADER
 
@@ -71,7 +107,7 @@ int main(void) {
 
 			#else 
 
-			DrawCircleV(getCenter(*resolution), 10.0f, RED);	
+			renderCells(cells, Vector2Add(Vector2Zero(), Vector2Scale(*resolution, 0.25)));
 			
 			#endif // USE_SHADER
 
