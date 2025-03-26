@@ -60,10 +60,60 @@ void computeNextState(Cell* cells) {
 		// skip if we're iterating over a dead cell or alive cell @ last row
 		if (!cells[i].isAlive || i + GRID_WIDTH > last) continue;
 
-		cells[i].isAlive = false;
-		Cell cellB = cells[i + GRID_LENGTH];
-		if (!cellB.isAlive) {
+		Cell* cellB = cells + i + GRID_WIDTH;
 
+		// cell falls through
+		if (!cellB->isAlive) {
+			cells[i].isAlive = false;
+			cellB->isAlive = true;
+			continue;
+		}
+
+		// cellL and cell are on the same row
+		if (i / GRID_WIDTH == i / (GRID_WIDTH - 1)) {
+			Cell* cellL = cells + i + GRID_WIDTH - 1;
+
+			// cellR and cell are on the same row
+			if (i + GRID_WIDTH + 1 <= last && i / GRID_WIDTH == i / (GRID_WIDTH + 1)) {
+				Cell* cellR = cells + i + GRID_WIDTH + 1;
+				// cell remains the same
+				if (cellR->isAlive && cellL->isAlive) continue;
+
+				// cell moves down-left
+				if (cellR->isAlive && !cellL->isAlive) {
+					cells[i].isAlive = false;
+					cellL->isAlive = true;
+
+
+				// cell moves down-right
+				} else if (!cellR->isAlive && cellL->isAlive){
+					cells[i].isAlive = false;
+					cellR->isAlive = true;
+
+				// cell moves either way
+				} else {
+					cells[i].isAlive = false;
+					if(rand() % 2 == 0) {
+						cellL->isAlive = true;
+					} else {
+						cellR->isAlive = true;
+					}
+				}
+			// we're on the right side of the grid
+			} else {
+				if (!cellL->isAlive) {
+					cells[i].isAlive = false;
+					cellL->isAlive = true;
+				}	
+			}
+
+		// we're on the left side of the grid
+		} else if (i + GRID_WIDTH + 1 <= last && i / GRID_WIDTH == i / (GRID_WIDTH + 1)) {
+			Cell* cellR = cells + i + GRID_WIDTH + 1;
+			if (!cellR->isAlive) {
+				cells[i].isAlive = false;
+				cellR->isAlive = true;
+			}	
 		}
 	}	
 }
@@ -105,13 +155,13 @@ int main(void) {
 	#endif // USE_SHADER
 	
 	Cell cells[GRID_LENGTH];
-	initCells(cells, chaosInit);
+	initCells(cells, stripeInit);
 
 	while (!WindowShouldClose()) {
 		resolution->x = (float)GetScreenWidth();
 		resolution->y = (float)GetScreenHeight();
 
-		// computeNextState(cells);
+		computeNextState(cells);
 		#ifdef USE_SHADER
 
 		float elapsed_time = GetTime();
