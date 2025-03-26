@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <raymath.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "colors.h"
 #include "window.h"
 
@@ -66,7 +68,13 @@ void computeNextState(Cell* cells) {
 	}	
 }
 
+void chaosInit(Cell* cell, size_t idx) {
+	cell->isAlive = rand() % 2 == 0;
+}
+
 int main(void) {
+	srand(time(NULL));
+
 	// init 
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Probabilistic Cellular Automata");	
 	SetTargetFPS(TARGET_FPS);
@@ -97,7 +105,7 @@ int main(void) {
 	#endif // USE_SHADER
 	
 	Cell cells[GRID_LENGTH];
-	initCells(cells, checkersInit);
+	initCells(cells, chaosInit);
 
 	while (!WindowShouldClose()) {
 		resolution->x = (float)GetScreenWidth();
