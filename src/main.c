@@ -35,8 +35,17 @@ void initCells(Cell* cells, InitCb cb) {
 	}
 }
 
-void oddInit(Cell* cell, size_t idx) {
+void stripeInit(Cell* cell, size_t idx) {
 	cell->isAlive = idx % 2 == 0;
+}
+
+void checkersInit (Cell* cell, size_t idx) {
+	// check if we're in odd row
+	if ((idx / GRID_WIDTH) % 2 != 0) {
+		cell->isAlive = idx % 2 != 0;
+	} else {
+		cell->isAlive = idx % 2 == 0;
+	}
 }
 
 int main(void) {
@@ -70,7 +79,7 @@ int main(void) {
 	#endif // USE_SHADER
 	
 	Cell cells[GRID_LENGTH];
-	initCells(cells, oddInit);
+	initCells(cells, checkersInit);
 
 	while (!WindowShouldClose()) {
 		resolution->x = (float)GetScreenWidth();
