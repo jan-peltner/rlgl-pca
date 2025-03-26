@@ -1,14 +1,15 @@
 #include <raylib.h>
 #include <stddef.h>
 #include <raymath.h>
+#include <stdio.h>
 #include "colors.h"
 #include "window.h"
 
 
 // #define USE_SHADER
-#define CELL_SIZE 10
-#define GRID_WIDTH 100
-#define GRID_HEIGHT 50 
+#define CELL_SIZE 8
+#define GRID_WIDTH 128 
+#define GRID_HEIGHT 128
 #define GRID_LENGTH GRID_WIDTH * GRID_HEIGHT
 
 typedef struct {
@@ -17,11 +18,14 @@ typedef struct {
 
 typedef void(InitCb)(Cell* cell, size_t idx);
 
-void renderCells(Cell* cells, Vector2 origin) {
+void renderCells(const Cell* cells) {
+	int originX = (WINDOW_WIDTH - (CELL_SIZE * GRID_WIDTH)) / 2;
+	int originY = (WINDOW_HEIGHT - (CELL_SIZE * GRID_HEIGHT)) / 2;
+	
 	for (size_t i = 0; i < GRID_LENGTH; ++i) {
 		DrawRectangle(
-			(i % GRID_WIDTH) * CELL_SIZE + (int)origin.x, 
-			(i / GRID_WIDTH) * CELL_SIZE + (int)origin.y, 
+			(i % GRID_WIDTH) * CELL_SIZE + originX, 
+			(i / GRID_WIDTH) * CELL_SIZE + originY, 
 			CELL_SIZE, 
 			CELL_SIZE, 
 			cells[i].isAlive ? RED : BLACK
@@ -39,13 +43,27 @@ void stripeInit(Cell* cell, size_t idx) {
 	cell->isAlive = idx % 2 == 0;
 }
 
-void checkersInit (Cell* cell, size_t idx) {
+void checkersInit(Cell* cell, size_t idx) {
 	// check if we're in odd row
 	if ((idx / GRID_WIDTH) % 2 != 0) {
 		cell->isAlive = idx % 2 != 0;
 	} else {
 		cell->isAlive = idx % 2 == 0;
 	}
+}
+
+void computeNextState(Cell* cells) {
+	size_t last = GRID_LENGTH - 1;
+	for (size_t i = 0; i < GRID_LENGTH; ++i) {
+		// skip if we're iterating over a dead cell or alive cell @ last row
+		if (!cells[i].isAlive || i + GRID_WIDTH > last) continue;
+
+		cells[i].isAlive = false;
+		Cell cellB = cells[i + GRID_LENGTH];
+		if (!cellB.isAlive) {
+
+		}
+	}	
 }
 
 int main(void) {
@@ -85,6 +103,7 @@ int main(void) {
 		resolution->x = (float)GetScreenWidth();
 		resolution->y = (float)GetScreenHeight();
 
+		// computeNextState(cells);
 		#ifdef USE_SHADER
 
 		float elapsed_time = GetTime();
@@ -116,7 +135,7 @@ int main(void) {
 
 			#else 
 
-			renderCells(cells, Vector2Add(Vector2Zero(), Vector2Scale(*resolution, 0.25)));
+			renderCells(cells);
 			
 			#endif // USE_SHADER
 
