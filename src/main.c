@@ -55,67 +55,80 @@ void checkersInit(Cell* cell, size_t idx) {
 }
 
 void computeNextState(Cell* cells) {
-	size_t last = GRID_LENGTH - 1;
-	for (size_t i = 0; i < GRID_LENGTH; ++i) {
-		// skip if we're iterating over a dead cell or alive cell @ last row
-		if (!cells[i].isAlive || i + GRID_WIDTH > last) continue;
-
-		Cell* cellB = cells + i + GRID_WIDTH;
-
-		// cell falls through
-		if (!cellB->isAlive) {
-			cells[i].isAlive = false;
-			cellB->isAlive = true;
-			continue;
-		}
-
-		// cellL and cell are on the same row
-		if (i / GRID_WIDTH == i / (GRID_WIDTH - 1)) {
-			Cell* cellL = cells + i + GRID_WIDTH - 1;
-
-			// cellR and cell are on the same row
-			if (i + GRID_WIDTH + 1 <= last && i / GRID_WIDTH == i / (GRID_WIDTH + 1)) {
-				Cell* cellR = cells + i + GRID_WIDTH + 1;
-				// cell remains the same
-				if (cellR->isAlive && cellL->isAlive) continue;
-
-				// cell moves down-left
-				if (cellR->isAlive && !cellL->isAlive) {
-					cells[i].isAlive = false;
-					cellL->isAlive = true;
-
-
-				// cell moves down-right
-				} else if (!cellR->isAlive && cellL->isAlive){
-					cells[i].isAlive = false;
-					cellR->isAlive = true;
-
-				// cell moves either way
-				} else {
-					cells[i].isAlive = false;
-					if(rand() % 2 == 0) {
-						cellL->isAlive = true;
-					} else {
-						cellR->isAlive = true;
-					}
-				}
-			// we're on the right side of the grid
-			} else {
-				if (!cellL->isAlive) {
-					cells[i].isAlive = false;
-					cellL->isAlive = true;
-				}	
-			}
-
-		// we're on the left side of the grid
-		} else if (i + GRID_WIDTH + 1 <= last && i / GRID_WIDTH == i / (GRID_WIDTH + 1)) {
-			Cell* cellR = cells + i + GRID_WIDTH + 1;
-			if (!cellR->isAlive) {
-				cells[i].isAlive = false;
-				cellR->isAlive = true;
-			}	
-		}
-	}	
+    Cell newCells[GRID_LENGTH];
+    
+    // Copy current state
+    for (size_t i = 0; i < GRID_LENGTH; ++i) {
+        newCells[i] = cells[i];
+    }
+    
+    for (size_t i = 0; i < GRID_LENGTH; ++i) {
+        // Skip cells in the bottom row
+        if ((i / GRID_WIDTH) >= GRID_HEIGHT - 1) continue;
+        
+        // Skip if dead
+        if (!cells[i].isAlive) continue;
+        
+        int row = i / GRID_WIDTH;
+        int col = i % GRID_WIDTH;
+        
+        // Cell below
+        size_t below = (row + 1) * GRID_WIDTH + col;
+        
+        // If cell below is empty, fall through
+        if (!cells[below].isAlive) {
+            newCells[i].isAlive = false;
+            newCells[below].isAlive = true;
+            continue;
+        }
+        
+        // Check left and right diagonals
+        bool hasLeft = col > 0;
+        bool hasRight = col < GRID_WIDTH - 1;
+        
+        size_t belowLeft = hasLeft ? (row + 1) * GRID_WIDTH + (col - 1) : 0;
+        size_t belowRight = hasRight ? (row + 1) * GRID_WIDTH + (col + 1) : 0;
+        
+        // Handle movement based on surrounding cells
+        if (hasLeft && hasRight) {
+            bool leftEmpty = !cells[belowLeft].isAlive;
+            bool rightEmpty = !cells[belowRight].isAlive;
+            
+            if (!leftEmpty && !rightEmpty) {
+                // Both occupied, no movement
+                continue;
+            } else if (!leftEmpty && rightEmpty) {
+                // Move right
+                newCells[i].isAlive = false;
+                newCells[belowRight].isAlive = true;
+            } else if (leftEmpty && !rightEmpty) {
+                // Move left
+                newCells[i].isAlive = false;
+                newCells[belowLeft].isAlive = true;
+            } else {
+                // Both empty, choose randomly
+                newCells[i].isAlive = false;
+                if (rand() % 2 == 0) {
+                    newCells[belowLeft].isAlive = true;
+                } else {
+                    newCells[belowRight].isAlive = true;
+                }
+            }
+        } else if (hasLeft && !cells[belowLeft].isAlive) {
+            // Only left available and empty
+            newCells[i].isAlive = false;
+            newCells[belowLeft].isAlive = true;
+        } else if (hasRight && !cells[belowRight].isAlive) {
+            // Only right available and empty
+            newCells[i].isAlive = false;
+            newCells[belowRight].isAlive = true;
+        }
+    }
+    
+    // Update the original cells array
+    for (size_t i = 0; i < GRID_LENGTH; ++i) {
+        cells[i] = newCells[i];
+    }
 }
 
 void chaosInit(Cell* cell, size_t idx) {
@@ -155,7 +168,7 @@ int main(void) {
 	#endif // USE_SHADER
 	
 	Cell cells[GRID_LENGTH];
-	initCells(cells, stripeInit);
+	initCells(cells, chaosInit);
 
 	while (!WindowShouldClose()) {
 		resolution->x = (float)GetScreenWidth();
