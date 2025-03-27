@@ -20,7 +20,7 @@ typedef struct {
 
 typedef void(InitCb)(Cell* cell, size_t idx);
 
-void renderCells(const Cell* cells) {
+void renderCells(const Cell* cells, Color* colors) {
 	int originX = (WINDOW_WIDTH - (CELL_SIZE * GRID_WIDTH)) / 2;
 	int originY = (WINDOW_HEIGHT - (CELL_SIZE * GRID_HEIGHT)) / 2;
 	
@@ -30,7 +30,7 @@ void renderCells(const Cell* cells) {
 			(i / GRID_WIDTH) * CELL_SIZE + originY, 
 			CELL_SIZE, 
 			CELL_SIZE, 
-			cells[i].isAlive ? RED : BLACK
+			cells[i].isAlive ? colors[5]: colors[8] 
 		);
 	}
 };
@@ -52,6 +52,10 @@ void checkersInit(Cell* cell, size_t idx) {
 	} else {
 		cell->isAlive = idx % 2 == 0;
 	}
+}
+
+void leftInit(Cell* cell, size_t idx) {
+	cell->isAlive = idx % GRID_WIDTH < 32;
 }
 
 void computeNextState(Cell* cells) {
@@ -168,7 +172,7 @@ int main(void) {
 	#endif // USE_SHADER
 	
 	Cell cells[GRID_LENGTH];
-	initCells(cells, chaosInit);
+	initCells(cells, leftInit);
 
 	while (!WindowShouldClose()) {
 		resolution->x = (float)GetScreenWidth();
@@ -206,7 +210,7 @@ int main(void) {
 
 			#else 
 
-			renderCells(cells);
+			renderCells(cells, colors);
 			
 			#endif // USE_SHADER
 
